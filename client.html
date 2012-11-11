@@ -28,12 +28,21 @@
   height: 100px;
   display: none;
 }
+
+.gift {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  font-size: 8px;
+  color: black;
+  display: none;
+}
 </style>
 </head>
 <body>
   <div class="row-fluid">
     <div class="span2">
-      <table class="table">
+      <table class="table" style="z-index: 99;">
         <tr>
           <td>
             線上人數:
@@ -43,7 +52,7 @@
         </tr>
         <tr>
           <td>
-            <table id="clientArr" class="table table-bordered"></table>
+            <table id="client_data" class="table table-bordered"></table>
           </td>
         </tr>
         <tr>
@@ -56,7 +65,7 @@
     </div>
   </div>
   
-  <div id="bubble" class="square" style="z-index: 99;">
+  <div id="bubble" class="square">
     <table>
       <tr>
         <td id="speak"></td>
@@ -65,6 +74,8 @@
   </div>
 
   <div id="any" class="girl"></div>
+
+  <div id="gift" class="gift"></div>
   
   <div id="fb-root"></div>
 
@@ -87,9 +98,6 @@
       if (response.authResponse) {
 
         FB.api('/me', function(response) {
-
-          console.log(response.name);
-
           var accept_from_server = true;
           var socket = io.connect('http://140.109.21.56:7331/');
 
@@ -97,46 +105,182 @@
             socket.emit('client_data', {
               username: response.name,
             });
+            customEvent();
+            console.log('connected');
           });
-          
-          socket.on('server_data', function(data) {
-            $("#nowClient").html(data.nowClient);
-          });
+          socket.on('disconnect', function() {
 
-          socket.on('avatar_data', function(data) {
-            if(accept_from_server == true) {
-              $("#bubble").hide(0);
-              $("#any").show(0);
-              $("#any").css("background", data.imgurl);
-              $("#any").css("left", data.left+"px");
-              $("#any").css("top", data.top+"px");
-            }
-          });
-          
-          socket.on('bubble_data', function(data) {
-            if(accept_from_server == true) {
-              $("#bubble").css("left", data.left+"px");
-              $("#bubble").css("top", data.top+"px");
-              $("#speak").html(data.text);
-              $("#bubble").fadeIn();
-            }
-          });
+            var middleLeft = document.body.clientWidth / 2;
+            var middleTop = document.body.clientHeight / 2;
 
-          socket.on('clientArr', function(data) {
-            var count = 0;
-            var html = "";
-            var arr = new Array();
-            arr = data.clientArr;
-            for(var i=0;i<arr.length;i++) {
-              html += "<tr><td>"+arr[i]+"</td></tr>";
-            }
-            $("#clientArr").html(html);
+            appearAny(middleLeft, middleTop, "url('http://i.imgur.com/iXzSA.png') no-repeat");
+            appearBubble(middleLeft + 90, middleTop, "すみません、すぐに戻る");
           });
 
           //send text to server
           $("#send").click(function() {
             socket.emit('gift_data', {text: $("#text").prop("value")});
+            $("#text").prop("value", "");
+            $("#text").focus();
           });
+
+          function appearBubble(left, top, text) {
+            $("#bubble").css("left", left+"px");
+            $("#bubble").css("top", top+"px");
+            $("#speak").html(text);
+            $("#bubble").fadeIn();
+          }
+
+          function appearAny(left, top, imgurl) {
+            $("#gift").fadeOut();
+            $("#gift").css("z-index", "1");
+
+            $("#bubble").hide(0);
+            $("#any").show(0);
+            $("#any").css("background", imgurl);
+            $("#any").css("left", left+"px");
+            $("#any").css("top", top+"px");
+          }
+
+          function customEvent() {
+            var server_data = function(data) {
+              $("#nowClient").html(data.nowClient);
+            };
+            var client_data = function(data) {
+              var count = 0;
+              var html = "";
+              var arr = new Array();
+              arr = data.arr;
+              for(var i=0;i<arr.length;i++) {
+                html += "<tr><td>"+arr[i]+"</td></tr>";
+              }
+              $("#client_data").html(html);
+            };
+            var avatar_data = function(data) {
+              if(accept_from_server == true) {
+                appearAny(data.left, data.top, data.imgurl)
+              }
+            };
+            var bubble_data = function(data) {
+              if(accept_from_server == true) {
+                appearBubble(data.left, data.top, data.text)
+              }
+            };
+            var gift_to_client = function(data) {
+
+              //reset
+              $("#gift").hide(0);
+              $("#gift").css("z-index", "999");
+              $("#gift").transition({ scale: 1 });
+
+              var str;
+              if(data.text != undefined) {
+                str = data.text;
+              }
+              else if(data.imgurl != undefined) {
+                str = "<img src='"+data.imgurl+"' width='50'>";
+              }
+
+              //stop server runing
+              accept_from_server = false;
+
+              var timeoffset = 250;
+
+              var avatarLeft = parseInt($("#any").css("left"), 10);
+              var avatarTop = parseInt($("#any").css("top"), 10);
+              appearAny(avatarLeft, avatarTop, "url('http://i.imgur.com/iXzSA.png') no-repeat");
+              appearBubble((avatarLeft+100), avatarTop, "あの、、、これプレゼントをあげる 。///。")
+
+              $("#any").delay(2000);
+
+              $("#any").queue(function () {
+                $("#bubble").hide(0);
+                $(this).css("background", "url('images/girl - rotate1.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/girl - rotate2.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/girl - rotate3.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/girl - rotate4.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/girl - rotate1.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/gift - rip1.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/gift - rip2.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/gift - rip3.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/gift - rip4.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/gift - rip5.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+              $("#any").queue(function () {
+                $(this).css("background", "url('images/gift - rip6.png') no-repeat");
+                $(this).dequeue();
+              }).delay(timeoffset);
+
+              $("#any").queue(function () {
+
+                $("#gift").html(str);
+
+                var giftWidth = parseInt($("#gift").css("width"), 10);
+                var giftHeight = parseInt($("#gift").css("height"), 10);
+
+                var boxLeft = avatarLeft + 50;
+                var boxTop = avatarTop + 50;
+
+                $("#gift").css("left", boxLeft);
+                $("#gift").css("top", boxTop);
+
+                var middleLeft = document.body.clientWidth / 2;
+                var middleTop = document.body.clientHeight / 2;
+
+                $("#gift").show(0);
+
+                $("#gift").animate({
+                  left: middleLeft,
+                  top: middleTop
+                });
+
+                $("#gift").transition({ scale: 15 });
+
+                $(this).dequeue();
+
+              }).delay(timeoffset + 2000);
+
+              $("#any").queue(function () {
+                accept_from_server = true;
+                $(this).dequeue();
+              });
+            };
+
+            socket.on('server_data', server_data);
+            socket.on('client_data', client_data);
+            socket.on('avatar_data', avatar_data);
+            socket.on('bubble_data', bubble_data);
+            socket.on('gift_to_client', gift_to_client);
+          }
         });
       }
       else {

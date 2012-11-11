@@ -32,10 +32,13 @@ var boundHeight = startTop + 600; //data.boundWidth;
 var avatarLeft = startLeft;
 var avatarTop = startTop;
 
-//角色對話框
-var hanashi;
+var turn = 0; //動作
+var hanashi; //對話
 
-var turn = 0; //左右
+var nxtTurn = 0; //下個動作
+
+var gift_min = 3; //Any手中禮物大於特定數即可送禮
+
 var move = 0; //上下
 var sign; //1, -1
 
@@ -47,6 +50,8 @@ var clientArr = new Array();
 var kotobaArr = new Array();
 //贈送圖片
 var eizouArr = new Array();
+//公開訊息
+var newsArr = new Array();
 
 var r = false;
 
@@ -113,7 +118,6 @@ io.sockets.on('connection', function(socket) {
 			  move = 0;
 			}
 			else if(turn >= 4) { //動作: 敬禮, 喜, 怒, 羞
-
 			  var img_arr = ["nod", "happy", "angry", "shy"];
 			  socket.broadcast.emit('avatar_data', {
 		  		imgurl: "url('images/girl - "+img_arr[turn-4]+".png') no-repeat",
@@ -126,7 +130,8 @@ io.sockets.on('connection', function(socket) {
 			  	top: avatarTop,
 			  	text: hanashi
 			  });
-			  turn = 1;
+
+			  turn = nxtTurn;
 			  move = 1;
 			}
 
@@ -134,8 +139,8 @@ io.sockets.on('connection', function(socket) {
 				nowClient: nowClient
 			});
 
-			socket.broadcast.emit('clientArr', {
-				clientArr: clientArr
+			socket.broadcast.emit('client_data', {
+				arr: clientArr
 			});
 			
 		}, offset);
@@ -145,7 +150,8 @@ io.sockets.on('connection', function(socket) {
 		nowClient ++;
 		
 		turn = 4;
-		hanashi = "お帰りなさい、御主人様";
+		nxtTurn = 1;
+		hanashi = "お帰りなさいませ、御主人様";
 
 		username = data.username;
 		clientArr.push(username);
@@ -156,36 +162,66 @@ io.sockets.on('connection', function(socket) {
 		nowClient --;
 
 		turn = 4;
+		nxtTurn = 1;
 		hanashi = "行ってらっしゃいませ、御主人様";
 
 		clientArr.removeElement(username);
 	});
 
 	socket.on('gift_data', function(data) {
-		if(data.text.search("幹你娘") != -1) {
-			turn = 6;
-			hanashi = "汚いの言葉なんか、大嫌い";
-		}
-		else if(data.text.search("我愛你") != -1) {
-			turn = 7;
-			hanashi = "そ！そんな事言われても嬉しくない";
-		}
-		else { 
-			turn = 5;
-			hanashi = "ああ、嬉しい";
-		}
 
 		var str = data.text.trim();
+		var thx = true;
 
-		//only accept image url
-		if(str.substr(0, 7) == "http://" && (str.substr(-4).toLowerCase() == ".jpg" || str.substr(-4).toLowerCase() == ".png")) {
-			eizouArr.push(str);
+		if(str.search("幹你娘") != -1) {
+			turn = 6;
+			hanashi = "汚いの言葉なんか、大嫌い！";
+			thx = false;
 		}
-		//or text
+		else if(str.search("我愛你") != -1) {
+			turn = 7;
+			hanashi = "そ、そんな事言われても嬉しくない！";
+		}
 		else {
-			kotobaArr.push(str);
+			turn = 5;
+			hanashi = "ああ、嬉しい。";
 		}
-		console.log(kotobaArr);
+		setTimeout(function() {
+			if(thx) {
+				turn = 4;
+				hanashi = "ありがとうございます、御主人様。"
+			}
+
+
+			console.log(eizouArr);
+			console.log(kotobaArr);
+
+			var s;
+			//only accept image url
+			if(str.substr(0, 7) == "http://" && (str.substr(-4).toLowerCase() == ".jpg" || str.substr(-4).toLowerCase() == ".png")) {
+				eizouArr.push(str);
+				eizouArr.shuffle();
+				if(eizouArr.length >= gift_min && useceil(0,1)) {
+					s = eizouArr.shift();
+					socket.emit('gift_to_client', {
+						imgurl: s
+					});
+					console.log("Send '"+s+"'");
+				}
+			}
+			//or text
+			else {
+				kotobaArr.push(str);
+				kotobaArr.shuffle();
+				if(kotobaArr.length >= gift_min && useceil(0,1)) {
+					s = kotobaArr.shift();
+					socket.emit('gift_to_client', {
+						text: s
+					});
+					console.log("Send '"+s+"'");
+				}
+			}
+		}, 2000);
 	});
 });
 
@@ -233,3 +269,9 @@ Array.prototype.removeElement= function(){
     }
     return this;
 }
+
+Array.prototype.shuffle = function(){ //v1.0
+	var o = arguments;
+    for(var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
