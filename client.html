@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <meta charset="utf-8" />
+  <title>Surprise!</title>
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
+  <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+  <script src="javascript/jquery.transit.js"></script>
+  <style>
+  body {
+    width: 100%;
+    height: 600px;
+  }
+.square {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  display: none;
+}
+
+.girl {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  background: url("images/girl.png") no-repeat;
+  width: 100px;
+  height: 100px;
+  display: none;
+}
+</style>
+</head>
+<body>
+  <div class="row-fluid">
+    <div class="span2">
+      <table class="table">
+        <tr>
+          <td>
+            線上人數:
+            <span id="nowClient">0</span>
+            人
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <table id="clientArr" class="table table-bordered"></table>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <input type="text" id="text" placeholder="文字或圖片連結">
+            <input type="button" id="send" value="送出">
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  
+  <div id="bubble" class="square" style="z-index: 99;">
+    <table>
+      <tr>
+        <td id="speak"></td>
+      </tr>
+    </table>
+  </div>
+
+  <div id="any" class="girl"></div>
+  
+  <div id="fb-root"></div>
+
+</body>
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="text/javascript">
+  window.fbAsyncInit = function() {
+    // init the FB JS SDK
+    FB.init({
+      appId      : '510074642338945', // App ID from the App Dashboard
+      channelUrl : '//140.109.21.56:7331/', // Channel File for x-domain communication
+      status     : true, // check the login status upon init?
+      cookie     : true, // set sessions cookies to allow your server to access the session?
+      xfbml      : true  // parse XFBML tags on this page?
+    });
+
+    // Additional initialization code such as adding Event Listeners goes here
+    FB.login(function(response) {
+
+      if (response.authResponse) {
+
+        FB.api('/me', function(response) {
+
+          console.log(response.name);
+
+          var accept_from_server = true;
+          var socket = io.connect('http://140.109.21.56:7331/');
+
+          socket.on('connect', function() {
+            socket.emit('client_data', {
+              username: response.name,
+            });
+          });
+          
+          socket.on('server_data', function(data) {
+            $("#nowClient").html(data.nowClient);
+          });
+
+          socket.on('avatar_data', function(data) {
+            if(accept_from_server == true) {
+              $("#bubble").hide(0);
+              $("#any").show(0);
+              $("#any").css("background", data.imgurl);
+              $("#any").css("left", data.left+"px");
+              $("#any").css("top", data.top+"px");
+            }
+          });
+          
+          socket.on('bubble_data', function(data) {
+            if(accept_from_server == true) {
+              $("#bubble").css("left", data.left+"px");
+              $("#bubble").css("top", data.top+"px");
+              $("#speak").html(data.text);
+              $("#bubble").fadeIn();
+            }
+          });
+
+          socket.on('clientArr', function(data) {
+            var count = 0;
+            var html = "";
+            var arr = new Array();
+            arr = data.clientArr;
+            for(var i=0;i<arr.length;i++) {
+              html += "<tr><td>"+arr[i]+"</td></tr>";
+            }
+            $("#clientArr").html(html);
+          });
+
+          //send text to server
+          $("#send").click(function() {
+            socket.emit('gift_data', {text: $("#text").prop("value")});
+          });
+        });
+      }
+      else {
+        alert('請登入Facebook並同意使用本應用程式');
+        console.log('You are not login facebook yet.');
+      }
+    }, {scope: 'user_about_me, publish_stream'});
+  };
+
+  // Load the SDK's source Asynchronously
+  (function(d, debug){
+     var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+     if (d.getElementById(id)) {return;}
+     js = d.createElement('script'); js.id = id; js.async = true;
+     js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+     ref.parentNode.insertBefore(js, ref);
+  }(document, /*debug*/ false));
+</script>
+</html>
