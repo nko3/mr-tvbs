@@ -37,6 +37,13 @@
   color: black;
   display: none;
 }
+
+#news_data {
+  position: absolute;
+  width: 280px;
+  right: 0px;
+  top: 0px;
+}
 </style>
 </head>
 <body>
@@ -63,6 +70,7 @@
         </tr>
       </table>
     </div>
+    <table id="news_data" class="table table-bordered"></table>
   </div>
   
   <div id="bubble" class="square">
@@ -85,7 +93,7 @@
   window.fbAsyncInit = function() {
     // init the FB JS SDK
     FB.init({
-      appId      : '510074642338945', // App ID from the App Dashboard
+      appId      : '296602400450029', // App ID from the App Dashboard
       channelUrl : '//140.109.21.56:7331/', // Channel File for x-domain communication
       status     : true, // check the login status upon init?
       cookie     : true, // set sessions cookies to allow your server to access the session?
@@ -122,6 +130,10 @@
             socket.emit('gift_data', {text: $("#text").prop("value")});
             $("#text").prop("value", "");
             $("#text").focus();
+            //public message to everyone
+            socket.emit('news_data', {
+              username: response.name,
+            });
           });
 
           function appearBubble(left, top, text) {
@@ -147,7 +159,6 @@
               $("#nowClient").html(data.nowClient);
             };
             var client_data = function(data) {
-              var count = 0;
               var html = "";
               var arr = new Array();
               arr = data.arr;
@@ -155,6 +166,15 @@
                 html += "<tr><td>"+arr[i]+"</td></tr>";
               }
               $("#client_data").html(html);
+            };
+            var news_data = function(data) {
+              var html = "";
+              var arr = new Array();
+              arr = data.arr;
+              for(var i=arr.length-1;i>=0;i--) {
+                html += "<tr><td>"+arr[i]+"</td></tr>";
+              }
+              $("#news_data").html(html);
             };
             var avatar_data = function(data) {
               if(accept_from_server == true) {
@@ -277,6 +297,7 @@
 
             socket.on('server_data', server_data);
             socket.on('client_data', client_data);
+            socket.on('news_data', news_data);
             socket.on('avatar_data', avatar_data);
             socket.on('bubble_data', bubble_data);
             socket.on('gift_to_client', gift_to_client);

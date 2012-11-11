@@ -142,6 +142,10 @@ io.sockets.on('connection', function(socket) {
 			socket.broadcast.emit('client_data', {
 				arr: clientArr
 			});
+
+			socket.broadcast.emit('news_data', {
+				arr: newsArr
+			});
 			
 		}, offset);
 	}
@@ -156,6 +160,14 @@ io.sockets.on('connection', function(socket) {
 		username = data.username;
 		clientArr.push(username);
 		removeDuplicates(clientArr);
+	});
+
+	socket.on('news_data', function(data) {
+		username = data.username;
+		newsArr.push(username + " 送了一份禮物給 Any!");
+		if(newsArr.length >= 15) {
+			newsArr.shift();
+		}
 	});
 
 	socket.on('disconnect', function() {
@@ -192,7 +204,6 @@ io.sockets.on('connection', function(socket) {
 				hanashi = "ありがとうございます、御主人様。"
 			}
 
-
 			console.log(eizouArr);
 			console.log(kotobaArr);
 
@@ -206,7 +217,7 @@ io.sockets.on('connection', function(socket) {
 					socket.emit('gift_to_client', {
 						imgurl: s
 					});
-					console.log("Send '"+s+"'");
+					console.log("Output '"+s+"'");
 				}
 			}
 			//or text
@@ -218,7 +229,7 @@ io.sockets.on('connection', function(socket) {
 					socket.emit('gift_to_client', {
 						text: s
 					});
-					console.log("Send '"+s+"'");
+					console.log("Output '"+s+"'");
 				}
 			}
 		}, 2000);
