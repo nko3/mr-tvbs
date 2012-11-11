@@ -42,6 +42,8 @@ var gift_min = 3; //Any手中禮物大於特定數即可送禮
 var move = 0; //上下
 var sign; //1, -1
 
+var remoteURL = "http://140.128.198.44/anycdn/"; //遠端圖源
+
 //玩家人數
 var nowClient = 0;
 //玩家姓名
@@ -53,7 +55,7 @@ var eizouArr = new Array();
 //公開訊息
 var newsArr = new Array();
 
-var r = false;
+var r = false; //避免重複interval
 
 io.sockets.on('connection', function(socket) {
 
@@ -86,7 +88,7 @@ io.sockets.on('connection', function(socket) {
 			//動作判別
 			if(turn == 1) { //正面站定
 			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('images/girl.png') no-repeat",
+		  		imgurl: "url('"+remoteURL+"images/girl.png') no-repeat",
 		  		left: avatarLeft,
 		  		top: avatarTop
 			  });
@@ -98,7 +100,7 @@ io.sockets.on('connection', function(socket) {
 			  avatarTop += (30 * sign);
 
 			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('images/girl - walkLeft.png') no-repeat",
+		  		imgurl: "url('"+remoteURL+"images/girl - walkLeft.png') no-repeat",
 		  		left: avatarLeft,
 		  		top: avatarTop
 			  });
@@ -110,7 +112,7 @@ io.sockets.on('connection', function(socket) {
 			  avatarTop += (30 * sign);
 
 			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('images/girl - walkRight.png') no-repeat",
+		  		imgurl: "url('"+remoteURL+"images/girl - walkRight.png') no-repeat",
 		  		left: avatarLeft,
 		  		top: avatarTop
 			  });
@@ -120,7 +122,7 @@ io.sockets.on('connection', function(socket) {
 			else if(turn >= 4) { //動作: 敬禮, 喜, 怒, 羞
 			  var img_arr = ["nod", "happy", "angry", "shy"];
 			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('images/girl - "+img_arr[turn-4]+".png') no-repeat",
+		  		imgurl: "url('"+remoteURL+"images/girl - "+img_arr[turn-4]+".png') no-repeat",
 		  		left: avatarLeft,
 		  		top: avatarTop
 			  });

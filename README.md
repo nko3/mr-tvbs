@@ -2,7 +2,7 @@
 
 ## Begin
 
-Having a servant is every nerd's dream, also we are.
+Having a servant is every nerd's dream, also we do.
 
 When I notice node.js strong realtime function, I totally be attracted.
 
