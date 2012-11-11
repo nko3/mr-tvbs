@@ -19,6 +19,7 @@ app.get('/', function(req, res){
 
 app.use('/images', express.static(__dirname + '/images'));
 app.use('/javascript', express.static(__dirname + '/javascript'));
+app.use('/css', express.static(__dirname + '/css'));
 
 //起始位置
 var startLeft = 100;
@@ -42,7 +43,7 @@ var gift_min = 3; //Any手中禮物大於特定數即可送禮
 var move = 0; //上下
 var sign; //1, -1
 
-var remoteURL = "http://140.128.198.44/anycdn/"; //遠端圖源
+var remoteURL = ""; //遠端圖源
 
 //玩家人數
 var nowClient = 0;
