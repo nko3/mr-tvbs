@@ -1,11 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+  <script src="javascript/jquery.min.js"></script>
   <meta charset="utf-8" />
   <title>Surprise!</title>
-  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/css/bootstrap-combined.min.css" rel="stylesheet">
-  <script src="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.1/js/bootstrap.min.js"></script>
+  <link href="css/bootstrap-combined.min.css" rel="stylesheet">
+  <script src="javascript/bootstrap.min.js"></script>
   <script src="javascript/jquery.transit.js"></script>
   <style>
   body {
@@ -14,6 +14,7 @@
   }
 .square {
   position: absolute;
+  z-index: 2;
   left: 0px;
   top: 0px;
   display: none;
@@ -23,7 +24,6 @@
   position: absolute;
   left: 0px;
   top: 0px;
-  background: url("http://140.128.198.44/anycdn/images/girl.png") no-repeat;
   width: 100px;
   height: 100px;
   display: none;
@@ -64,6 +64,7 @@
         </tr>
         <tr>
           <td>
+            <h3>送安麗一個禮物<i class="icon-gift"></i></h3>
             <input type="text" id="text" placeholder="文字或圖片連結">
             <input type="button" id="send" value="送出">
           </td>
@@ -81,7 +82,7 @@
     </table>
   </div>
 
-  <div id="any" class="girl"></div>
+  <div id="any" class="girl"><img /></div>
 
   <div id="gift" class="gift"></div>
   
@@ -93,8 +94,8 @@
   window.fbAsyncInit = function() {
     // init the FB JS SDK
     FB.init({
-      appId      : '296602400450029', // App ID from the App Dashboard
-      channelUrl : '//140.109.21.56:7331/', // Channel File for x-domain communication
+      appId      : '510074642338945', // App ID from the App Dashboard
+      channelUrl : '//mr-tvbs.nko3.jitsu.com/channel.php', // Channel File for x-domain communication
       status     : true, // check the login status upon init?
       cookie     : true, // set sessions cookies to allow your server to access the session?
       xfbml      : true  // parse XFBML tags on this page?
@@ -106,22 +107,24 @@
       if (response.authResponse) {
 
         FB.api('/me', function(response) {
+          var imgurl;
           var accept_from_server = true;
-          var socket = io.connect('http://140.109.21.56:7331/');
+          var socket = io.connect('http://mr-tvbs.nko3.jitsu.com');
 
           socket.on('connect', function() {
             socket.emit('client_data', {
-              username: response.name,
+              username: response.name, //"Guest-"+new Date().getTime(),
             });
             customEvent();
-            console.log('connected');
+            console.log('Connected');
+
           });
           socket.on('disconnect', function() {
 
             var middleLeft = document.body.clientWidth / 2;
             var middleTop = document.body.clientHeight / 2;
 
-            appearAny(middleLeft, middleTop, "url('http://140.128.198.44/anycdn/images/girl - nod.png') no-repeat");
+            appearAny(middleLeft, middleTop, "http://i.imgur.com/iXzSA.png");
             appearBubble(middleLeft + 90, middleTop, "すみません、すぐに戻る");
           });
 
@@ -143,18 +146,42 @@
             $("#bubble").fadeIn();
           }
 
-          function appearAny(left, top, imgurl) {
+          function appearAny(left, top, img) {
             $("#gift").fadeOut();
             $("#gift").css("z-index", "1");
 
             $("#bubble").hide(0);
             $("#any").show(0);
-            $("#any").css("background", imgurl);
             $("#any").css("left", left+"px");
             $("#any").css("top", top+"px");
+
+            if(img.search("http://") != -1) {
+              $("#any").html("<img src='"+img+"'>");
+            }
+            else {
+              $("#any img").prop("src", $("#"+img).prop("src"));
+            }
           }
 
+          //客製化事件傳遞
           function customEvent() {
+
+            var global_data = function(data) {
+              imgurl = data.imgurl;
+            };
+            var images_data = function(data) {
+              // Add hidden element
+              var hidden = $('body').append('<div id="img-cache" style="display:none" />').children('#img-cache');
+
+              $.each(data.special, function (i, val) {
+                $('<img/>').prop('id', val).prop('src', imgurl + val + ".png").appendTo(hidden);
+              });
+
+              // Add images to hidden element.
+              $.each(data.normal, function (i, val) {
+                $('<img/>').prop('id', val).prop('src', imgurl + val + ".png").appendTo(hidden);
+              });
+            };
             var server_data = function(data) {
               $("#nowClient").html(data.nowClient);
             };
@@ -178,12 +205,12 @@
             };
             var avatar_data = function(data) {
               if(accept_from_server == true) {
-                appearAny(data.left, data.top, data.imgurl)
+                appearAny(data.left, data.top, data.imgid);
               }
             };
             var bubble_data = function(data) {
               if(accept_from_server == true) {
-                appearBubble(data.left, data.top, data.text)
+                appearBubble(data.left, data.top, data.text);
               }
             };
             var gift_to_client = function(data) {
@@ -197,8 +224,8 @@
               if(data.text != undefined) {
                 str = data.text;
               }
-              else if(data.imgurl != undefined) {
-                str = "<img src='"+data.imgurl+"' width='50'>";
+              else if(data.img != undefined) {
+                str = "<img src='"+data.img+"' width='50'>";
               }
 
               //stop server runing
@@ -208,55 +235,55 @@
 
               var avatarLeft = parseInt($("#any").css("left"), 10);
               var avatarTop = parseInt($("#any").css("top"), 10);
-              appearAny(avatarLeft, avatarTop, "url('http://i.imgur.com/iXzSA.png') no-repeat");
+              appearAny(avatarLeft, avatarTop, "nm4");
               appearBubble((avatarLeft+100), avatarTop, "あの、、、これプレゼントをあげる 。///。")
 
               $("#any").delay(2000);
 
               $("#any").queue(function () {
                 $("#bubble").hide(0);
-                $(this).css("background", "url('images/girl - rotate1.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp1.png");
                 $(this).dequeue();
               }).delay(timeoffset);
 
               $("#any").queue(function () {
-                $(this).css("background", "url('images/girl - rotate2.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp2.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/girl - rotate3.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp3.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/girl - rotate4.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp4.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/girl - rotate1.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp1.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/gift - rip1.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp5.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/gift - rip2.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp6.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/gift - rip3.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp7.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/gift - rip4.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp8.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/gift - rip5.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp9.png");
                 $(this).dequeue();
               }).delay(timeoffset);
               $("#any").queue(function () {
-                $(this).css("background", "url('images/gift - rip6.png') no-repeat");
+                $("#any img").prop("src", imgurl+"sp10.png");
                 $(this).dequeue();
               }).delay(timeoffset);
 
@@ -283,7 +310,7 @@
                   top: middleTop
                 });
 
-                $("#gift").transition({ scale: 15 });
+                $("#gift").transition({ scale: 10 });
 
                 $(this).dequeue();
 
@@ -294,30 +321,22 @@
                 $(this).dequeue();
               });
             };
-
+            socket.on('global_data', global_data);
             socket.on('server_data', server_data);
             socket.on('client_data', client_data);
+            socket.on('images_data', images_data);
             socket.on('news_data', news_data);
             socket.on('avatar_data', avatar_data);
             socket.on('bubble_data', bubble_data);
             socket.on('gift_to_client', gift_to_client);
           }
+
         });
       }
       else {
         alert('請登入Facebook並同意使用本應用程式');
-        console.log('You are not login facebook yet.');
       }
     }, {scope: 'user_about_me, publish_stream'});
   };
-
-  // Load the SDK's source Asynchronously
-  (function(d, debug){
-     var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement('script'); js.id = id; js.async = true;
-     js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
-     ref.parentNode.insertBefore(js, ref);
-  }(document, /*debug*/ false));
 </script>
 </html>

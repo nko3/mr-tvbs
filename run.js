@@ -19,6 +19,7 @@ app.get('/', function(req, res){
 
 app.use('/images', express.static(__dirname + '/images'));
 app.use('/javascript', express.static(__dirname + '/javascript'));
+app.use('/css', express.static(__dirname + '/css'));
 
 //起始位置
 var startLeft = 100;
@@ -42,7 +43,8 @@ var gift_min = 3; //Any手中禮物大於特定數即可送禮
 var move = 0; //上下
 var sign; //1, -1
 
-var remoteURL = "http://140.128.198.44/anycdn/"; //遠端圖源
+var remote = "";
+var imgurl = remote + "images/"; //遠端圖源
 
 //玩家人數
 var nowClient = 0;
@@ -61,6 +63,16 @@ io.sockets.on('connection', function(socket) {
 
 	var offset = 1000;
 	var username;
+
+	//送圖片路徑至客戶端
+	socket.emit('global_data', {
+		imgurl: imgurl
+	});
+	//送圖片連結至客戶端做快取
+	socket.emit('images_data', {
+		normal: createImages("nm", 1, 7),
+		special: createImages("sp", 1, 10)
+	});
 
 	//啟動後持續偵測
 	if(r == false) {
@@ -86,61 +98,53 @@ io.sockets.on('connection', function(socket) {
 			}
 
 			//動作判別
-			if(turn == 1) { //正面站定
-			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('"+remoteURL+"images/girl.png') no-repeat",
-		  		left: avatarLeft,
-		  		top: avatarTop
-			  });
-			  turn = 0;
-			  move = 0;
-			}
-			else if(turn == 2) { //左(上/下)移
-			  avatarLeft -= 30;
-			  avatarTop += (30 * sign);
+			if(turn < 4) {
 
-			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('"+remoteURL+"images/girl - walkLeft.png') no-repeat",
-		  		left: avatarLeft,
-		  		top: avatarTop
-			  });
-			  turn = 0;
-			  move = 0;
-			}
-			else if(turn == 3) { //右(上/下)移
-			  avatarLeft += 30;
-			  avatarTop += (30 * sign);
+				if(turn == 1) {} //正面站定
+				if(turn == 2) { //左移
+					avatarLeft -= 30;
+					avatarTop += (30 * sign); //上或下移
+				}
+				else if(turn == 3) { //右移
+					avatarLeft += 30;
+					avatarTop += (30 * sign); //上或下移
+				}
 
-			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('"+remoteURL+"images/girl - walkRight.png') no-repeat",
-		  		left: avatarLeft,
-		  		top: avatarTop
-			  });
-			  turn = 0;
-			  move = 0;
+				//移動
+				socket.broadcast.emit('avatar_data', {
+					imgid: "nm"+turn,
+					left: avatarLeft,
+			 		top: avatarTop
+				});
+
+				turn = 0;
+				move = 0;
 			}
 			else if(turn >= 4) { //動作: 敬禮, 喜, 怒, 羞
-			  var img_arr = ["nod", "happy", "angry", "shy"];
-			  socket.broadcast.emit('avatar_data', {
-		  		imgurl: "url('"+remoteURL+"images/girl - "+img_arr[turn-4]+".png') no-repeat",
-		  		left: avatarLeft,
-		  		top: avatarTop
-			  });
 
-			  socket.broadcast.emit('bubble_data', {
-			  	left: (avatarLeft + 100),
-			  	top: avatarTop,
-			  	text: hanashi
-			  });
+				//移動
+				socket.broadcast.emit('avatar_data', {
+					imgid: "nm"+turn,
+					left: avatarLeft,
+			 		top: avatarTop
+				});
+				//說話
+				socket.broadcast.emit('bubble_data', {
+					left: (avatarLeft + 100),
+					top: avatarTop,
+					text: hanashi
+				});
 
-			  turn = nxtTurn;
-			  move = 1;
+				turn = nxtTurn;
+				move = 1;
 			}
 
+			//伺服器資訊
 			socket.broadcast.emit('server_data', {
 				nowClient: nowClient
 			});
 
+			//客戶端資訊
 			socket.broadcast.emit('client_data', {
 				arr: clientArr
 			});
@@ -161,7 +165,7 @@ io.sockets.on('connection', function(socket) {
 
 		username = data.username;
 		clientArr.push(username);
-		removeDuplicates(clientArr);
+		removeDuplicates(clientArr); //去除重複名稱
 	});
 
 	socket.on('news_data', function(data) {
@@ -217,7 +221,7 @@ io.sockets.on('connection', function(socket) {
 				if(eizouArr.length >= gift_min && useceil(0,1)) {
 					s = eizouArr.shift();
 					socket.emit('gift_to_client', {
-						imgurl: s
+						img: s
 					});
 					console.log("Output '"+s+"'");
 				}
@@ -241,6 +245,18 @@ io.sockets.on('connection', function(socket) {
 //取亂數
 function useceil(min,max) {
   return Math.ceil(Math.random()*(max-min+1)+min-1);
+}
+
+//建置所有會使到的圖片陣列
+function createImages(prefix, begin, end) {
+
+	var imageArray = new Array();
+
+	for(var i = begin; i <= end; i ++) {
+		imageArray.push( (prefix + i) );
+	}
+
+	return imageArray;
 }
 
 var arrayContains = Array.prototype.indexOf ?
