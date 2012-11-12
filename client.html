@@ -44,6 +44,10 @@
   right: 0px;
   top: 0px;
 }
+
+#speak {
+  font-size: 26px;
+}
 </style>
 </head>
 <body>
@@ -52,9 +56,9 @@
       <table class="table" style="z-index: 99;">
         <tr>
           <td>
-            線上人數:
+            <span id="online_user">Online user</span>:
             <span id="nowClient">0</span>
-            人
+            <span id="person"></span>
           </td>
         </tr>
         <tr>
@@ -64,9 +68,9 @@
         </tr>
         <tr>
           <td>
-            <h3>送安麗一個禮物<i class="icon-gift"></i></h3>
-            <input type="text" id="text" placeholder="文字或圖片連結">
-            <input type="button" id="send" value="送出">
+            <h4><span id="sidebar_title">Give Any a present</span><i class="icon-gift"></i></h4>
+            <input type="text" id="text" placeholder="text or image url">
+            <input type="button" id="send" value="Send">
           </td>
         </tr>
       </table>
@@ -87,7 +91,6 @@
   <div id="gift" class="gift"></div>
   
   <div id="fb-root"></div>
-
 </body>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/javascript">
@@ -107,17 +110,58 @@
       if (response.authResponse) {
 
         FB.api('/me', function(response) {
+
+          var socket = io.connect('http://mr-tvbs.nko3.jitsu.com');　//http://localhost:7331');//
+          var clientName = response.name; //"Guest-"+new Date().getTime();
+
           var imgurl;
           var accept_from_server = true;
-          var socket = io.connect('http://mr-tvbs.nko3.jitsu.com');
+
+          var lang;
+          var translation = {
+            "online_user": {
+              "en": "Online user",
+              "zh": "線上人數",
+              "ja": "オンライン人数"
+            },
+            "person": {
+              "en": "",
+              "zh": "人",
+              "ja": "人"
+            },
+            "sidebar_title": {
+              "en": "Give Any a present",
+              "zh": "送安麗一個禮物",
+              "ja": "プレゼントをエーニちゃんにあげる"
+            },
+            "placeholder": {
+              "en": "text or image url",
+              "zh": "文字或圖片連結",
+              "ja": "文字や画像にりんくを貼る"
+            },
+            "send": {
+              "en": "Send",
+              "zh": "送出",
+              "ja": "贈る"
+            },
+            "special_message": {
+              "en": "I... I have a present for you.",
+              "zh": "那個... 我有一個禮物要送你 。///。",
+              "ja": "あの、、、これプレゼントをあげる 。///。"
+            },
+            "maintain_message": {
+              "en": "Sorry, I'll be back soon. :)",
+              "zh": "不好意思喔~ 我很快就會回來的 :)",
+              "ja": "すみません、すぐに戻る"
+            }
+          };
 
           socket.on('connect', function() {
             socket.emit('client_data', {
-              username: response.name, //"Guest-"+new Date().getTime(),
+              username: clientName, 
             });
             customEvent();
             console.log('Connected');
-
           });
           socket.on('disconnect', function() {
 
@@ -125,7 +169,7 @@
             var middleTop = document.body.clientHeight / 2;
 
             appearAny(middleLeft, middleTop, "http://i.imgur.com/iXzSA.png");
-            appearBubble(middleLeft + 90, middleTop, "すみません、すぐに戻る");
+            appearBubble(middleLeft + 90, middleTop, translation["maintain_message"][lang]);
           });
 
           //send text to server
@@ -133,9 +177,11 @@
             socket.emit('gift_data', {text: $("#text").prop("value")});
             $("#text").prop("value", "");
             $("#text").focus();
+            //can not speak due to motion end
+            disableSpeak("y");
             //public message to everyone
             socket.emit('news_data', {
-              username: response.name,
+              username: clientName,
             });
           });
 
@@ -163,11 +209,29 @@
             }
           }
 
+          function disableSpeak(yorn) {
+            if(yorn == "y") {
+              $("#text").prop("disabled", true);
+              $("#send").prop("disabled", true);
+            }
+            else if(yorn = "n") {
+              $("#text").prop("disabled", false);
+              $("#send").prop("disabled", false);
+            }
+          }
+
           //客製化事件傳遞
           function customEvent() {
 
             var global_data = function(data) {
+              lang = data.lang;
               imgurl = data.imgurl;
+
+              $("#online_user").html(translation["online_user"][lang]);
+              $("#person").html(translation["person"][lang]);
+              $("#sidebar_title").html(translation["sidebar_title"][lang]);
+              $("#text").prop("placeholder", translation["placeholder"][lang]);
+              $("#send").prop("value", translation["send"][lang]);
             };
             var images_data = function(data) {
               // Add hidden element
@@ -205,7 +269,12 @@
             };
             var avatar_data = function(data) {
               if(accept_from_server == true) {
+                //follow the data from server to control avatar
                 appearAny(data.left, data.top, data.imgid);
+                if(data.imgid == "nm4" || data.imgid == "nm6" ) {
+                  //continue let user speak
+                  disableSpeak("n");
+                }
               }
             };
             var bubble_data = function(data) {
@@ -228,15 +297,14 @@
                 str = "<img src='"+data.img+"' width='50'>";
               }
 
-              //stop server runing
+              //take over avatar controll from server
               accept_from_server = false;
 
               var timeoffset = 250;
-
               var avatarLeft = parseInt($("#any").css("left"), 10);
               var avatarTop = parseInt($("#any").css("top"), 10);
               appearAny(avatarLeft, avatarTop, "nm4");
-              appearBubble((avatarLeft+100), avatarTop, "あの、、、これプレゼントをあげる 。///。")
+              appearBubble((avatarLeft+100), avatarTop, translation["special_message"][lang])
 
               $("#any").delay(2000);
 
@@ -317,7 +385,10 @@
               }).delay(timeoffset + 2000);
 
               $("#any").queue(function () {
+                //continue let server control avatar
                 accept_from_server = true;
+                //continue let user speak
+                disableSpeak("n");
                 $(this).dequeue();
               });
             };

@@ -1,25 +1,9 @@
-var express = require('express')
-  , app = express()
-  , http = require('http')
-  , server = http.createServer(app)
-  , io = require('socket.io').listen(server, { log: false })
-  , fs = require('fs');
-server.listen(7331);
+//語言
+var lang = "en";
 
-app.get('/', function(req, res){
-	fs.readFile(__dirname + '/client.html', function(err, data) {
-		if (err) {
-	      res.writeHead(500);
-	      return res.end('Error loading client.html');
-	    }
-	    res.writeHead(200);
-	    res.end(data);
-	});
-});
-
-app.use('/images', express.static(__dirname + '/images'));
-app.use('/javascript', express.static(__dirname + '/javascript'));
-app.use('/css', express.static(__dirname + '/css'));
+//圖片路徑
+var remote = "";
+var imgurl = remote + "images/";
 
 //起始位置
 var startLeft = 100;
@@ -43,9 +27,6 @@ var gift_min = 3; //Any手中禮物大於特定數即可送禮
 var move = 0; //上下
 var sign; //1, -1
 
-var remote = "";
-var imgurl = remote + "images/"; //遠端圖源
-
 //玩家人數
 var nowClient = 0;
 //玩家姓名
@@ -59,6 +40,86 @@ var newsArr = new Array();
 
 var r = false; //避免重複interval
 
+var express = require('express')
+  , app = express()
+  , http = require('http')
+  , server = http.createServer(app)
+  , io = require('socket.io').listen(server, { log: false })
+  , fs = require('fs')
+  , Localize = require('localize');
+
+server.listen(7331);
+
+var local = new Localize({
+    "Hello": {
+        "zh": "你好",
+        "jp": "こんにちわ"
+    },
+    "Error loading client.html": {
+    	"zh": "讀取 client.html 發生錯誤"
+    },
+    "Welcome back, my lord.": {
+    	"zh": "歡迎回來~ 主人 >///<",
+    	"ja": "お帰りなさいませ、御主人様"
+    },
+    "$[1] send a gift to Any.": {
+    	"zh": "$[1] 送了一份禮物給安麗!",
+    	"ja": "$[1] はエーニちゃんにプレゼントをあげました！"
+    },
+    "Have a nice day, my lord.": {
+    	"zh": "主人慢走~ ^///^",
+    	"ja": "行ってらっしゃいませ、御主人様"
+    },
+    "Ewww... I hate dirty words!": {
+    	"zh": "髒話什麼的最討厭了 >\"<",
+    	"ja": "汚いの言葉なんか、大嫌い！"
+    },
+    "Its so romantic... But! not becuz you say that.": {
+    	"zh": "就、就算你這麼說，我也不會開心的 `///ˊ",
+    	"ja": "そ、そんな事言われても嬉しくない！"
+    },
+    "You are so kind.": {
+    	"zh": "主人你真好！",
+     	"ja": "ああ、嬉しい。"
+ 	},
+    "Thank you very much, my lord.": {
+    	"zh": "非常謝謝你，主人 ^_^",
+    	"ja": "ありがとうございます、御主人様。"
+    }
+});
+
+app.configure(function() {
+    app.use(function(request, response, next) {
+    	if(request.headers["accept-language"].search("zh-TW") != -1) {
+    		lang = "zh";
+    	}
+    	else if(request.headers["accept-language"].search("ja-JP") != -1) {
+    		lang = "ja";
+    	}
+    	else {
+    		lang = "en";
+    	}
+        local.setLocale(lang);
+        next();
+    });
+    // routing
+	app.use('/images', express.static(__dirname + '/images'));
+	app.use('/javascript', express.static(__dirname + '/javascript'));
+	app.use('/css', express.static(__dirname + '/css'));
+	app.use('/translations', express.static(__dirname + '/translations'));
+
+	app.get('/', function(req, res){
+		fs.readFile(__dirname + '/client.html', function(err, data) {
+			if (err) {
+		      res.writeHead(500);
+		      return res.end(local.translate('Error loading client.html'));
+		    }
+		    res.writeHead(200);
+		    res.end(data);
+		});
+	});
+});
+
 io.sockets.on('connection', function(socket) {
 
 	var offset = 1000;
@@ -66,6 +127,7 @@ io.sockets.on('connection', function(socket) {
 
 	//送圖片路徑至客戶端
 	socket.emit('global_data', {
+		lang: lang,
 		imgurl: imgurl
 	});
 	//送圖片連結至客戶端做快取
@@ -161,7 +223,7 @@ io.sockets.on('connection', function(socket) {
 		
 		turn = 4;
 		nxtTurn = 1;
-		hanashi = "お帰りなさいませ、御主人様";
+		hanashi = local.translate('Welcome back, my lord.');
 
 		username = data.username;
 		clientArr.push(username);
@@ -170,7 +232,7 @@ io.sockets.on('connection', function(socket) {
 
 	socket.on('news_data', function(data) {
 		username = data.username;
-		newsArr.push(username + " 送了一份禮物給 Any!");
+		newsArr.push(local.translate('$[1] send a gift to Any.', username));
 		if(newsArr.length >= 15) {
 			newsArr.shift();
 		}
@@ -181,7 +243,7 @@ io.sockets.on('connection', function(socket) {
 
 		turn = 4;
 		nxtTurn = 1;
-		hanashi = "行ってらっしゃいませ、御主人様";
+		hanashi = local.translate('Have a nice day, my lord.');
 
 		clientArr.removeElement(username);
 	});
@@ -191,23 +253,23 @@ io.sockets.on('connection', function(socket) {
 		var str = data.text.trim();
 		var thx = true;
 
-		if(str.search("幹你娘") != -1) {
+		if(str.search("fuck") != -1 || str.search("幹你") != -1) {
 			turn = 6;
-			hanashi = "汚いの言葉なんか、大嫌い！";
+			hanashi = local.translate('Ewww... I hate dirty words!');
 			thx = false;
 		}
-		else if(str.search("我愛你") != -1) {
+		else if(str.search("love you") != -1 || str.search("愛你") != -1) {
 			turn = 7;
-			hanashi = "そ、そんな事言われても嬉しくない！";
+			hanashi = local.translate("Its so romantic... But! not becuz you say that.");
 		}
 		else {
 			turn = 5;
-			hanashi = "ああ、嬉しい。";
+			hanashi = local.translate('You are so kind.');
 		}
 		setTimeout(function() {
 			if(thx) {
 				turn = 4;
-				hanashi = "ありがとうございます、御主人様。"
+				hanashi = local.translate('Thank you very much, my lord.');
 			}
 
 			console.log(eizouArr);
