@@ -2,18 +2,24 @@
 
 ## Begin
 
-Having a servant is every nerd's dream, also we do.
+Having a servant is every nerd's dream, also we do. 
 
-When I notice node.js strong realtime function, I totally be attracted.
+When we notice node.js strong realtime function, we totally be attracted.
 
-Then we join node.js knockout, and build a cute servant for everyone!
+We build a cute little servant named Any.
 
-Look! There's a cute servant over here!
+You can send any word or image to her.
+
+She will make different special motion to feed back.
+
+So, if you feel lonely just send her a gift.
+
+Let's see what will happen :D
 
 ## Function
 
 * You can send text or image to Any.
-* She will have some emotion when you send different thing.
+* She will react different motion when you send different word or image.
 * If you got lucky, Any will also send you gift. :D
 
 ## Motion
@@ -23,4 +29,3 @@ Look! There's a cute servant over here!
 * Shy
 * Nod
 * Walk around
-* Send you a special gift :3
