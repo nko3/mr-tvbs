@@ -56,6 +56,12 @@
       <table class="table" style="z-index: 99;">
         <tr>
           <td>
+            <h3>2012 Nodejs Knockout</h3>
+            <a id="vote" href="http://nodeknockout.com/teams/mr-tvbs#votes">Vote</a>
+          </td>
+        </tr>
+        <tr>
+          <td>
             <span id="online_user">Online user</span>:
             <span id="nowClient">0</span>
             <span id="person"></span>
@@ -97,7 +103,7 @@
   window.fbAsyncInit = function() {
     // init the FB JS SDK
     FB.init({
-      appId      : '510074642338945', // App ID from the App Dashboard
+      appId      : '546510172030451', // App ID from the App Dashboard
       channelUrl : '//mr-tvbs.nko3.jitsu.com/channel.php', // Channel File for x-domain communication
       status     : true, // check the login status upon init?
       cookie     : true, // set sessions cookies to allow your server to access the session?
@@ -119,6 +125,11 @@
 
           var lang;
           var translation = {
+            "vote": {
+              "en": "Go vote",
+              "zh": "替我們投票加油",
+              "ja": "頑張れ"
+            },
             "online_user": {
               "en": "Online user",
               "zh": "線上人數",
@@ -227,6 +238,8 @@
               lang = data.lang;
               imgurl = data.imgurl;
 
+              //翻譯網站文字
+              $("#vote").html(translation["vote"][lang]);
               $("#online_user").html(translation["online_user"][lang]);
               $("#person").html(translation["person"][lang]);
               $("#sidebar_title").html(translation["sidebar_title"][lang]);
