@@ -50,6 +50,7 @@ var express = require('express')
 
 server.listen(7331);
 
+//翻譯
 var local = new Localize({
     "Hello": {
         "zh": "你好",
@@ -89,6 +90,7 @@ var local = new Localize({
 });
 
 app.configure(function() {
+	//根據Header判斷語系
     app.use(function(request, response, next) {
     	if(request.headers["accept-language"].search("zh-TW") != -1) {
     		lang = "zh";
@@ -102,7 +104,7 @@ app.configure(function() {
         local.setLocale(lang);
         next();
     });
-    // routing
+    //路徑重導
 	app.use('/images', express.static(__dirname + '/images'));
 	app.use('/javascript', express.static(__dirname + '/javascript'));
 	app.use('/css', express.static(__dirname + '/css'));
@@ -112,7 +114,7 @@ app.configure(function() {
 		fs.readFile(__dirname + '/client.html', function(err, data) {
 			if (err) {
 		      res.writeHead(500);
-		      return res.end(local.translate('Error loading client.html'));
+		      return res.end(local.translate("Error loading client.html"));
 		    }
 		    res.writeHead(200);
 		    res.end(data);
@@ -223,7 +225,7 @@ io.sockets.on('connection', function(socket) {
 		
 		turn = 4;
 		nxtTurn = 1;
-		hanashi = local.translate('Welcome back, my lord.');
+		hanashi = local.translate("Welcome back, my lord.");
 
 		username = data.username;
 		clientArr.push(username);
@@ -232,7 +234,7 @@ io.sockets.on('connection', function(socket) {
 
 	socket.on('news_data', function(data) {
 		username = data.username;
-		newsArr.push(local.translate('$[1] send a gift to Any.', username));
+		newsArr.push(local.translate("$[1] send a gift to Any.", username));
 		if(newsArr.length >= 15) {
 			newsArr.shift();
 		}
@@ -243,7 +245,7 @@ io.sockets.on('connection', function(socket) {
 
 		turn = 4;
 		nxtTurn = 1;
-		hanashi = local.translate('Have a nice day, my lord.');
+		hanashi = local.translate("Have a nice day, my lord.");
 
 		clientArr.removeElement(username);
 	});
@@ -255,7 +257,7 @@ io.sockets.on('connection', function(socket) {
 
 		if(str.search("fuck") != -1 || str.search("幹你") != -1) {
 			turn = 6;
-			hanashi = local.translate('Ewww... I hate dirty words!');
+			hanashi = local.translate("Ewww... I hate dirty words!");
 			thx = false;
 		}
 		else if(str.search("love you") != -1 || str.search("愛你") != -1) {
@@ -264,12 +266,12 @@ io.sockets.on('connection', function(socket) {
 		}
 		else {
 			turn = 5;
-			hanashi = local.translate('You are so kind.');
+			hanashi = local.translate("You are so kind.");
 		}
 		setTimeout(function() {
 			if(thx) {
 				turn = 4;
-				hanashi = local.translate('Thank you very much, my lord.');
+				hanashi = local.translate("Thank you very much, my lord.");
 			}
 
 			console.log(eizouArr);
