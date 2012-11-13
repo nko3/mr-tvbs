@@ -56,8 +56,8 @@
       <table class="table" style="z-index: 99;">
         <tr>
           <td>
-            <h3>2012 Nodejs Knockout</h3>
-            <a id="vote" href="http://nodeknockout.com/teams/mr-tvbs#votes">Vote</a>
+            <h4>2012 Nodejs Knockout</h4>
+            <a id="vote" href="http://nodeknockout.com/teams/mr-tvbs#votes" target="_blank">Vote</a>
           </td>
         </tr>
         <tr>
@@ -70,6 +70,7 @@
         <tr>
           <td>
             <table id="client_data" class="table table-bordered"></table>
+            <div id="fb_login" class="fb-login-button" data-show-faces="false" data-width="100" data-max-rows="1"></div>
           </td>
         </tr>
         <tr>
@@ -100,275 +101,259 @@
 </body>
   <script src="/socket.io/socket.io.js"></script>
   <script type="text/javascript">
-  window.fbAsyncInit = function() {
-    // init the FB JS SDK
-    FB.init({
-      appId      : '546510172030451', // App ID from the App Dashboard
-      channelUrl : '//mr-tvbs.nko3.jitsu.com/channel.php', // Channel File for x-domain communication
-      status     : true, // check the login status upon init?
-      cookie     : true, // set sessions cookies to allow your server to access the session?
-      xfbml      : true  // parse XFBML tags on this page?
+  disableSpeak("y");
+
+  var hostname = "mr-tvbs.nko3.jitsu.com"; //localhost:7331
+  var username;
+
+  var chk_username = setInterval(function() {
+    if(username != undefined) {
+      letsPlay();
+      clearInterval(chk_username);
+    }
+  }, 500);
+
+  function letsPlay() {
+    var socket = io.connect('http://' + hostname);
+
+    var imgurl;
+    var accept_from_server = true;
+
+    var lang;
+    var translation = {
+        "vote": {
+            "en": "Go vote",
+                "zh": "替我們投票加油",
+                "ja": "頑張れ"
+        },
+            "online_user": {
+            "en": "Online user",
+                "zh": "線上人數",
+                "ja": "オンライン人数"
+        },
+            "person": {
+            "en": "",
+                "zh": "人",
+                "ja": "人"
+        },
+            "sidebar_title": {
+            "en": "Give Any a present",
+                "zh": "送安麗一個禮物",
+                "ja": "プレゼントをエーニちゃんにあげる"
+        },
+            "placeholder": {
+            "en": "text or image url",
+                "zh": "文字或圖片連結",
+                "ja": "文字や画像にりんくを貼る"
+        },
+            "send": {
+            "en": "Send",
+                "zh": "送出",
+                "ja": "贈る"
+        },
+            "special_message": {
+            "en": "I... I have a present for you.",
+                "zh": "那個... 我有一個禮物要送你 。///。",
+                "ja": "あの、、、これプレゼントをあげる 。///。"
+        },
+            "maintain_message": {
+            "en": "Sorry, I'll be back soon. :)",
+                "zh": "不好意思喔~ 我很快就會回來的 :)",
+                "ja": "すみません、すぐに戻る"
+        }
+    };
+
+    socket.on('connect', function () {
+        disableSpeak("n");
+        console.log('Connected');
+        socket.emit('client_data', {
+            username: username
+        });
+        customEvent();
     });
 
-    // Additional initialization code such as adding Event Listeners goes here
-    FB.login(function(response) {
+    socket.on('disconnect', function () {
+        var middleLeft = document.body.clientWidth / 2 - 100;
+        var middleTop = document.body.clientHeight / 2;
+        appearAny(middleLeft, middleTop, "http://i.imgur.com/iXzSA.png");
+        appearBubble(middleLeft + 90, middleTop, translation["maintain_message"][lang]);
+    });
 
-      if (response.authResponse) {
+    //send text to server
+    $("#send").click(function () {
+        socket.emit('gift_data', {
+            text: $("#text").prop("value")
+        });
+        $("#text").prop("value", "");
+        $("#text").focus();
+        //can not speak due to motion end
+        disableSpeak("y");
+        //public message to everyone
+        socket.emit('news_data', {});
+    });
 
-        FB.api('/me', function(response) {
+    function appearBubble(left, top, text) {
+        $("#bubble").css("left", left + "px");
+        $("#bubble").css("top", top + "px");
+        $("#speak").html(text);
+        $("#bubble").fadeIn();
+    }
 
-          var socket = io.connect('http://mr-tvbs.nko3.jitsu.com');　//http://localhost:7331');//
-          var clientName = response.name; //"Guest-"+new Date().getTime();
+    function appearAny(left, top, img) {
+        $("#gift").fadeOut();
+        $("#gift").css("z-index", "1");
 
-          var imgurl;
-          var accept_from_server = true;
+        $("#bubble").hide(0);
+        $("#any").show(0);
+        $("#any").css("left", left + "px");
+        $("#any").css("top", top + "px");
 
-          var lang;
-          var translation = {
-            "vote": {
-              "en": "Go vote",
-              "zh": "替我們投票加油",
-              "ja": "頑張れ"
-            },
-            "online_user": {
-              "en": "Online user",
-              "zh": "線上人數",
-              "ja": "オンライン人数"
-            },
-            "person": {
-              "en": "",
-              "zh": "人",
-              "ja": "人"
-            },
-            "sidebar_title": {
-              "en": "Give Any a present",
-              "zh": "送安麗一個禮物",
-              "ja": "プレゼントをエーニちゃんにあげる"
-            },
-            "placeholder": {
-              "en": "text or image url",
-              "zh": "文字或圖片連結",
-              "ja": "文字や画像にりんくを貼る"
-            },
-            "send": {
-              "en": "Send",
-              "zh": "送出",
-              "ja": "贈る"
-            },
-            "special_message": {
-              "en": "I... I have a present for you.",
-              "zh": "那個... 我有一個禮物要送你 。///。",
-              "ja": "あの、、、これプレゼントをあげる 。///。"
-            },
-            "maintain_message": {
-              "en": "Sorry, I'll be back soon. :)",
-              "zh": "不好意思喔~ 我很快就會回來的 :)",
-              "ja": "すみません、すぐに戻る"
-            }
-          };
+        if (img.search("http://") != -1) {
+            $("#any").html("<img src='" + img + "'>");
+        } else {
+            $("#any img").prop("src", $("#" + img).prop("src"));
+        }
+    }
 
-          socket.on('connect', function() {
-            socket.emit('client_data', {
-              username: clientName, 
-            });
-            customEvent();
-            console.log('Connected');
-          });
-          socket.on('disconnect', function() {
+    //客製化事件傳遞
+    function customEvent() {
 
-            var middleLeft = document.body.clientWidth / 2;
-            var middleTop = document.body.clientHeight / 2;
+        var global_data = function (data) {
+            lang = data.lang;
+            imgurl = data.imgurl;
 
-            appearAny(middleLeft, middleTop, "http://i.imgur.com/iXzSA.png");
-            appearBubble(middleLeft + 90, middleTop, translation["maintain_message"][lang]);
-          });
+            //翻譯網站文字
+            $("#vote").html(translation["vote"][lang]);
+            $("#online_user").html(translation["online_user"][lang]);
+            $("#person").html(translation["person"][lang]);
+            $("#sidebar_title").html(translation["sidebar_title"][lang]);
+            $("#text").prop("placeholder", translation["placeholder"][lang]);
+            $("#send").prop("value", translation["send"][lang]);
+        };
+        var images_data = function (data) {
+            // Add hidden element
+            var hidden = $('body').append('<div id="img-cache" style="display:none" />').children('#img-cache');
 
-          //send text to server
-          $("#send").click(function() {
-            socket.emit('gift_data', {text: $("#text").prop("value")});
-            $("#text").prop("value", "");
-            $("#text").focus();
-            //can not speak due to motion end
-            disableSpeak("y");
-            //public message to everyone
-            socket.emit('news_data', {
-              username: clientName,
-            });
-          });
-
-          function appearBubble(left, top, text) {
-            $("#bubble").css("left", left+"px");
-            $("#bubble").css("top", top+"px");
-            $("#speak").html(text);
-            $("#bubble").fadeIn();
-          }
-
-          function appearAny(left, top, img) {
-            $("#gift").fadeOut();
-            $("#gift").css("z-index", "1");
-
-            $("#bubble").hide(0);
-            $("#any").show(0);
-            $("#any").css("left", left+"px");
-            $("#any").css("top", top+"px");
-
-            if(img.search("http://") != -1) {
-              $("#any").html("<img src='"+img+"'>");
-            }
-            else {
-              $("#any img").prop("src", $("#"+img).prop("src"));
-            }
-          }
-
-          function disableSpeak(yorn) {
-            if(yorn == "y") {
-              $("#text").prop("disabled", true);
-              $("#send").prop("disabled", true);
-            }
-            else if(yorn = "n") {
-              $("#text").prop("disabled", false);
-              $("#send").prop("disabled", false);
-            }
-          }
-
-          //客製化事件傳遞
-          function customEvent() {
-
-            var global_data = function(data) {
-              lang = data.lang;
-              imgurl = data.imgurl;
-
-              //翻譯網站文字
-              $("#vote").html(translation["vote"][lang]);
-              $("#online_user").html(translation["online_user"][lang]);
-              $("#person").html(translation["person"][lang]);
-              $("#sidebar_title").html(translation["sidebar_title"][lang]);
-              $("#text").prop("placeholder", translation["placeholder"][lang]);
-              $("#send").prop("value", translation["send"][lang]);
-            };
-            var images_data = function(data) {
-              // Add hidden element
-              var hidden = $('body').append('<div id="img-cache" style="display:none" />').children('#img-cache');
-
-              $.each(data.special, function (i, val) {
+            $.each(data.special, function (i, val) {
                 $('<img/>').prop('id', val).prop('src', imgurl + val + ".png").appendTo(hidden);
-              });
+            });
 
-              // Add images to hidden element.
-              $.each(data.normal, function (i, val) {
+            // Add images to hidden element.
+            $.each(data.normal, function (i, val) {
                 $('<img/>').prop('id', val).prop('src', imgurl + val + ".png").appendTo(hidden);
-              });
-            };
-            var server_data = function(data) {
-              $("#nowClient").html(data.nowClient);
-            };
-            var client_data = function(data) {
-              var html = "";
-              var arr = new Array();
-              arr = data.arr;
-              for(var i=0;i<arr.length;i++) {
-                html += "<tr><td>"+arr[i]+"</td></tr>";
-              }
-              $("#client_data").html(html);
-            };
-            var news_data = function(data) {
-              var html = "";
-              var arr = new Array();
-              arr = data.arr;
-              for(var i=arr.length-1;i>=0;i--) {
-                html += "<tr><td>"+arr[i]+"</td></tr>";
-              }
-              $("#news_data").html(html);
-            };
-            var avatar_data = function(data) {
-              if(accept_from_server == true) {
+            });
+        };
+        var server_data = function (data) {
+            $("#nowClient").html(data.nowClient);
+        };
+        var client_data = function (data) {
+            var html = "";
+            var arr = new Array();
+            arr = data.arr;
+            for (var i = 0; i < arr.length; i++) {
+                html += "<tr><td>" + arr[i] + "</td></tr>";
+            }
+            $("#client_data").html(html);
+        };
+        var news_data = function (data) {
+            var html = "";
+            var arr = new Array();
+            arr = data.arr;
+            for (var i = arr.length - 1; i >= 0; i--) {
+                html += "<tr><td>" + arr[i] + "</td></tr>";
+            }
+            $("#news_data").html(html);
+        };
+        var avatar_data = function (data) {
+            if (accept_from_server == true) {
                 //follow the data from server to control avatar
                 appearAny(data.left, data.top, data.imgid);
-                if(data.imgid == "nm4" || data.imgid == "nm6" ) {
-                  //continue let user speak
-                  disableSpeak("n");
+                if (data.imgid == "nm4" || data.imgid == "nm6") {
+                    //continue let user speak
+                    disableSpeak("n");
                 }
-              }
-            };
-            var bubble_data = function(data) {
-              if(accept_from_server == true) {
+            }
+        };
+        var bubble_data = function (data) {
+            if (accept_from_server == true) {
                 appearBubble(data.left, data.top, data.text);
-              }
-            };
-            var gift_to_client = function(data) {
+            }
+        };
+        var gift_to_client = function (data) {
 
-              //reset
-              $("#gift").hide(0);
-              $("#gift").css("z-index", "999");
-              $("#gift").transition({ scale: 1 });
+            //reset
+            $("#gift").hide(0);
+            $("#gift").css("z-index", "999");
+            $("#gift").transition({
+                scale: 1
+            });
 
-              var str;
-              if(data.text != undefined) {
+            var str;
+            if (data.text != undefined) {
                 str = data.text;
-              }
-              else if(data.img != undefined) {
-                str = "<img src='"+data.img+"' width='50'>";
-              }
+            } else if (data.img != undefined) {
+                str = "<img src='" + data.img + "' width='50'>";
+            }
 
-              //take over avatar controll from server
-              accept_from_server = false;
+            //take over avatar controll from server
+            accept_from_server = false;
 
-              var timeoffset = 250;
-              var avatarLeft = parseInt($("#any").css("left"), 10);
-              var avatarTop = parseInt($("#any").css("top"), 10);
-              appearAny(avatarLeft, avatarTop, "nm4");
-              appearBubble((avatarLeft+100), avatarTop, translation["special_message"][lang])
+            var timeoffset = 250;
+            var avatarLeft = parseInt($("#any").css("left"), 10);
+            var avatarTop = parseInt($("#any").css("top"), 10);
+            appearAny(avatarLeft, avatarTop, "nm4");
+            appearBubble((avatarLeft + 100), avatarTop, translation["special_message"][lang])
 
-              $("#any").delay(2000);
+            $("#any").delay(2000);
 
-              $("#any").queue(function () {
+            $("#any").queue(function () {
                 $("#bubble").hide(0);
-                $("#any img").prop("src", imgurl+"sp1.png");
+                $("#any img").prop("src", imgurl + "sp1.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
+            }).delay(timeoffset);
 
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp2.png");
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp2.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp3.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp3.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp4.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp4.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp1.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp1.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp5.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp5.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp6.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp6.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp7.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp7.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp8.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp8.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp9.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp9.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
-              $("#any").queue(function () {
-                $("#any img").prop("src", imgurl+"sp10.png");
+            }).delay(timeoffset);
+            $("#any").queue(function () {
+                $("#any img").prop("src", imgurl + "sp10.png");
                 $(this).dequeue();
-              }).delay(timeoffset);
+            }).delay(timeoffset);
 
-              $("#any").queue(function () {
+            $("#any").queue(function () {
 
                 $("#gift").html(str);
 
@@ -387,47 +372,83 @@
                 $("#gift").show(0);
 
                 $("#gift").animate({
-                  left: middleLeft,
-                  top: middleTop
+                    left: middleLeft,
+                    top: middleTop
                 });
 
-                $("#gift").transition({ scale: 10 });
+                $("#gift").transition({
+                    scale: 10
+                });
 
                 $(this).dequeue();
 
-              }).delay(timeoffset + 2000);
+            }).delay(timeoffset + 2000);
 
-              $("#any").queue(function () {
+            $("#any").queue(function () {
                 //continue let server control avatar
                 accept_from_server = true;
                 //continue let user speak
                 disableSpeak("n");
                 $(this).dequeue();
-              });
-            };
-            socket.on('global_data', global_data);
-            socket.on('server_data', server_data);
-            socket.on('client_data', client_data);
-            socket.on('images_data', images_data);
-            socket.on('news_data', news_data);
-            socket.on('avatar_data', avatar_data);
-            socket.on('bubble_data', bubble_data);
-            socket.on('gift_to_client', gift_to_client);
-          }
-        });
+            });
+        };
+        socket.on('global_data', global_data);
+        socket.on('server_data', server_data);
+        socket.on('client_data', client_data);
+        socket.on('images_data', images_data);
+        socket.on('news_data', news_data);
+        socket.on('avatar_data', avatar_data);
+        socket.on('bubble_data', bubble_data);
+        socket.on('gift_to_client', gift_to_client);
+    }
+  }
+
+  //disable input box
+  function disableSpeak(yorn) {
+      if (yorn == "y") {
+          $("#text").prop("disabled", true);
+          $("#send").prop("disabled", true);
+      } else if (yorn = "n") {
+          $("#text").prop("disabled", false);
+          $("#send").prop("disabled", false);
       }
-      else {
-        alert('請登入Facebook並同意使用本應用程式');
-      }
-    }, {scope: 'user_about_me, publish_stream'});
+  }
+
+  //facebook login event
+  window.fbAsyncInit = function() {
+      FB.init({
+        appId      : '296602400450029',
+        channelUrl : '//'+hostname,
+        status     : true,
+        cookie     : true,
+        xfbml      : true
+      });
+
+      FB.getLoginStatus(function(response) {
+        if (response.status === 'connected') {
+          $("#fb_login").hide(0);
+          FB.api('/me', function(response) {
+            username = response.name;
+          });
+        }
+        else {
+          $("#fb_login").show(0);
+          username = "Guest - "+new Date().getTime();
+        }
+      });
+
+      FB.Event.subscribe('auth.login', function(response) {
+        if(response.status === 'connected') {
+          location.href = "/client.html";
+        }
+      });
   };
-  // Load the SDK's source Asynchronously
   (function(d, debug){
-     var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
-     if (d.getElementById(id)) {return;}
-     js = d.createElement('script'); js.id = id; js.async = true;
-     js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
-     ref.parentNode.insertBefore(js, ref);
+    var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+    if (d.getElementById(id)) {return;}
+    js = d.createElement('script'); js.id = id; js.async = true;
+    js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
+    ref.parentNode.insertBefore(js, ref);
   }(document,  false));
-</script>
+  </script>
 </html>

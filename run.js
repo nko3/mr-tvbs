@@ -22,7 +22,7 @@ var hanashi; //對話
 
 var nxtTurn = 0; //下個動作
 
-var gift_min = 3; //Any手中禮物大於特定數即可送禮
+var gift_min = 5; //Any手中禮物大於特定數即可送禮
 
 var move = 0; //上下
 var sign; //1, -1
@@ -48,7 +48,7 @@ var express = require('express')
   , fs = require('fs')
   , Localize = require('localize');
 
-server.listen(7331);
+server.listen(80);
 
 //翻譯
 var local = new Localize({
@@ -56,8 +56,9 @@ var local = new Localize({
         "zh": "你好",
         "jp": "こんにちわ"
     },
-    "Error loading client.html": {
-    	"zh": "讀取 client.html 發生錯誤"
+    "Error loading $[1]": {
+    	"zh": "讀取 $[1] 發生錯誤",
+    	"ja": "$[1] エラー"
     },
     "Welcome back, my lord.": {
     	"zh": "歡迎回來~ 主人 >///<",
@@ -86,6 +87,10 @@ var local = new Localize({
     "Thank you very much, my lord.": {
     	"zh": "非常謝謝你，主人 ^_^",
     	"ja": "ありがとうございます、御主人様。"
+    },
+    "Wow! Any send $[1] a special gift!": {
+    	"zh": "哇！$[1] 收到安麗送的特別禮物！",
+    	"ja": "うわあ！エーニちゃんは $[1] に特別のプレゼントをあげました！"
     }
 });
 
@@ -110,11 +115,21 @@ app.configure(function() {
 	app.use('/css', express.static(__dirname + '/css'));
 	app.use('/translations', express.static(__dirname + '/translations'));
 
-	app.get('/', function(req, res){
+	app.get('/client.html', function(req, res){
 		fs.readFile(__dirname + '/client.html', function(err, data) {
 			if (err) {
 		      res.writeHead(500);
-		      return res.end(local.translate("Error loading client.html"));
+		      return res.end(local.translate("Error loading $[1]", "client.html"));
+		    }
+		    res.writeHead(200);
+		    res.end(data);
+		});
+	});
+	app.get('/', function(req, res){
+		fs.readFile(__dirname + '/home.html', function(err, data) {
+			if (err) {
+		      res.writeHead(500);
+		      return res.end(local.translate("Error loading $[1]", "home.html"));
 		    }
 		    res.writeHead(200);
 		    res.end(data);
@@ -220,24 +235,23 @@ io.sockets.on('connection', function(socket) {
 		}, offset);
 	}
 
+	socket.on('news_data', function() {
+		newsArr.push(local.translate("$[1] send a gift to Any.", username));
+		if(newsArr.length >= 15) {
+			newsArr.shift();
+		}
+	});
+
 	socket.on('client_data', function(data) {
 		nowClient ++;
-		
+
 		turn = 4;
 		nxtTurn = 1;
 		hanashi = local.translate("Welcome back, my lord.");
 
 		username = data.username;
-		clientArr.push(username);
+		clientArr.push(data.username);
 		removeDuplicates(clientArr); //去除重複名稱
-	});
-
-	socket.on('news_data', function(data) {
-		username = data.username;
-		newsArr.push(local.translate("$[1] send a gift to Any.", username));
-		if(newsArr.length >= 15) {
-			newsArr.shift();
-		}
 	});
 
 	socket.on('disconnect', function() {
@@ -255,12 +269,12 @@ io.sockets.on('connection', function(socket) {
 		var str = data.text.trim();
 		var thx = true;
 
-		if(str.search("fuck") != -1 || str.search("幹你") != -1) {
+		if(isDirtyWord(str)) {
 			turn = 6;
 			hanashi = local.translate("Ewww... I hate dirty words!");
 			thx = false;
 		}
-		else if(str.search("love you") != -1 || str.search("愛你") != -1) {
+		else if(isLoveWord(str)) {
 			turn = 7;
 			hanashi = local.translate("Its so romantic... But! not becuz you say that.");
 		}
@@ -273,13 +287,13 @@ io.sockets.on('connection', function(socket) {
 				turn = 4;
 				hanashi = local.translate("Thank you very much, my lord.");
 			}
-
+/*
 			console.log(eizouArr);
 			console.log(kotobaArr);
-
+*/
 			var s;
 			//only accept image url
-			if(str.substr(0, 7) == "http://" && (str.substr(-4).toLowerCase() == ".jpg" || str.substr(-4).toLowerCase() == ".png")) {
+			if(str.substr(0, 7) == "http://" && (str.substr(-4).toLowerCase() == ".jpg" || str.substr(-4).toLowerCase() == ".png") && isDirtyWord(str) != true) {
 				eizouArr.push(str);
 				eizouArr.shuffle();
 				if(eizouArr.length >= gift_min && useceil(0,1)) {
@@ -288,18 +302,20 @@ io.sockets.on('connection', function(socket) {
 						img: s
 					});
 					console.log("Output '"+s+"'");
+					newsArr.push(local.translate("Wow! Any send $[1] a special gift!", username));
 				}
 			}
 			//or text
 			else {
 				kotobaArr.push(str);
 				kotobaArr.shuffle();
-				if(kotobaArr.length >= gift_min && useceil(0,1)) {
+				if(kotobaArr.length >= gift_min && useceil(0,1) && isDirtyWord(str) != true) {
 					s = kotobaArr.shift();
 					socket.emit('gift_to_client', {
 						text: s
 					});
 					console.log("Output '"+s+"'");
+					newsArr.push(local.translate("Wow! Any send $[1] a special gift!", username));
 				}
 			}
 		}, 2000);
@@ -321,6 +337,32 @@ function createImages(prefix, begin, end) {
 	}
 
 	return imageArray;
+}
+
+var dirtyWord = [
+	"幹你", "幹我", "幹他", "操你", "你媽", "你娘", "屄", "老木", "草泥馬", "山林涼", "草枝擺",	"fuck", "dick", "junk", "jizz", "penis"
+];
+//髒話偵測
+function isDirtyWord(str) {
+	str = str.toLowerCase();
+	for(var i=0;i<dirtyWord.length;i++) {
+		if(str.search(dirtyWord[i]) != -1) {
+			return true;
+		}
+	}
+}
+
+var loveWord = [
+	"愛你", "喜歡你", "愛安麗", "喜歡安麗",	"love you", "like you", "love u", "like u", "love any", "like any"
+];
+//髒話偵測
+function isLoveWord(str) {
+	str = str.toLowerCase();
+	for(var i=0;i<loveWord.length;i++) {
+		if(str.search(loveWord[i]) != -1) {
+			return true;
+		}
+	}
 }
 
 var arrayContains = Array.prototype.indexOf ?
