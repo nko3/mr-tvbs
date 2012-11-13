@@ -18,7 +18,7 @@
 				position: absolute;
 				left: 0px;
 				top: 0px;
-				font-size: 18px;
+				font-size: 20px;
 			}
 			.container {
 				position: relative;
@@ -42,10 +42,19 @@
 						<div id="guest_login" class="btn"></div>
 					</td>
 				</tr>
+				<tr>
+					<td colspan="2" align="center"><br>
+						<select id="lang_select">
+							<option value="en">English</option>
+							<option value="zh">繁體中文</option>
+							<option value="ja">日本語</option>
+						</select>
+					</td>
+				</tr>
 			</table>
 		</center>
 		<script type="text/javascript">
-			var lang = "ja";
+			var lang = "en";
 			var translation = {
 				"welcome": {
 					"en": "Welcome, my lord.",
@@ -68,14 +77,25 @@
 					"ja": "ログインください"
 				}
 			};
+
 			var any_left = parseInt($("#any").css("left"), 10);
 			var any_top = parseInt($("#any").css("top"), 10);
-			$("#welcome").html(translation["welcome"][lang]);
-			$("#welcome").css("left", any_left + 80 + "px");
-			$("#welcome").css("top", any_top - 20 + "px");
 
-			$("#guest_login").html(translation["guest_login"][lang]);
-			$("#fb_login").html(translation["fb_login"][lang]);
+			$("#lang_select").change(function() {
+				lang = $("#lang_select").prop("value");
+				localize();
+			});
+
+			localize();
+			function localize() {
+			
+				$("#welcome").html(translation["welcome"][lang]);
+				$("#welcome").css("left", any_left + 80 + "px");
+				$("#welcome").css("top", any_top - 20 + "px");
+
+				$("#guest_login").html(translation["guest_login"][lang]);
+				$("#fb_login").html(translation["fb_login"][lang]);
+			}
 		</script>
 		<div id="fb-root"></div>
 		<script src="/socket.io/socket.io.js"></script>
@@ -84,7 +104,7 @@
 		window.fbAsyncInit = function() {
 			FB.init({
 				appId      : '296602400450029',
-				channelUrl : '//'+hostname,
+				channelUrl : '//'+hostname+"/channel.html",
 				status     : true,
 				cookie     : true,
 				xfbml      : true

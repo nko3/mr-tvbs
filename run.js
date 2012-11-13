@@ -95,20 +95,6 @@ var local = new Localize({
 });
 
 app.configure(function() {
-	//根據Header判斷語系
-    app.use(function(request, response, next) {
-    	if(request.headers["accept-language"].search("zh-TW") != -1) {
-    		lang = "zh";
-    	}
-    	else if(request.headers["accept-language"].search("ja-JP") != -1) {
-    		lang = "ja";
-    	}
-    	else {
-    		lang = "en";
-    	}
-        local.setLocale(lang);
-        next();
-    });
     //路徑重導
 	app.use('/images', express.static(__dirname + '/images'));
 	app.use('/javascript', express.static(__dirname + '/javascript'));
@@ -116,6 +102,15 @@ app.configure(function() {
 	app.use('/translations', express.static(__dirname + '/translations'));
 
 	app.get('/client.html', function(req, res){
+		//根據Header判斷語系
+		if(req.headers["accept-language"].substr(0, 5) == "zh-TW")
+			lang = "zh";
+    	else if(req.headers["accept-language"].substr(0, 5) == "ja-JP")
+    		lang = "ja";
+    	else
+    		lang = "en";
+        local.setLocale(lang);
+
 		fs.readFile(__dirname + '/client.html', function(err, data) {
 			if (err) {
 		      res.writeHead(500);

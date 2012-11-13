@@ -418,12 +418,12 @@
   window.fbAsyncInit = function() {
       FB.init({
         appId      : '296602400450029',
-        channelUrl : '//'+hostname,
+        channelUrl : '//'+hostname+"/channel.html",
         status     : true,
         cookie     : true,
         xfbml      : true
       });
-
+      
       FB.getLoginStatus(function(response) {
         if (response.status === 'connected') {
           $("#fb_login").hide(0);
