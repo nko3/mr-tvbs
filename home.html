@@ -100,20 +100,16 @@
 		<div id="fb-root"></div>
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="text/javascript">
-		var hostname = "mr-tvbs.nko3.jitsu.com"; //localhost:7331
+		var hostname = "mr-tvbs.nko3.jitsu.com";
 		window.fbAsyncInit = function() {
 			FB.init({
-				appId      : '296602400450029',
-				channelUrl : '//'+hostname+"/channel.html",
-				status     : true,
-				cookie     : true,
-				xfbml      : true
+				appId      : '520027581354212',
+				channelUrl : '//'+hostname+"/channel.html"
 			});
 			$("#fb_login").click(function() {
 				FB.login(function(response) {
 					if (response.authResponse) {
 						FB.api('/me', function(response) {
-							console.log(response.username);
 							location.href = "client.html";
 						});
 					}
@@ -132,7 +128,7 @@
 			js = d.createElement('script'); js.id = id; js.async = true;
 			js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
 			ref.parentNode.insertBefore(js, ref);
-		}(document,  false));
+		}(document, /*debug*/ false));
 		</script>
 	</body>
 </html>

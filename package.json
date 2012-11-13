@@ -1,7 +1,7 @@
 {
   "name": "nko3-mr-tvbs",
-  "version": "0.0.0-39",
-  "description": "A maid that can giv you a little suprise",
+  "version": "0.0.0-51",
+  "description": "Are you feel lonely? Come visit our cute servant Any.",
   "main": "run.js",
   "scripts": {
     "start": "node run.js"
@@ -13,7 +13,8 @@
   "dependencies": {
     "socket.io": "0.9.x",
     "express": "3.0.x",
-    "localize": "0.4.x"
+    "localize": "0.4.x",
+    "cron": "1.0.x"
   },
   "engines": {
     "node": "0.8.x"
