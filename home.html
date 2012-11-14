@@ -25,6 +25,10 @@
 				width: 600px;
 				height: 300px;
 			}
+			#purpose, #manual {
+				font-size: 20px;
+				font-weight: bold;
+			}
 		</style>
 	</head>
 	<body>
@@ -33,54 +37,53 @@
 				<div id="any"></div>
 				<div id="welcome"></div>
 			</div>
-			<table>
-				<tr>
-					<td>
-						<div id="fb_login" class="btn btn-primary"></div>	
-					</td>
-					<td>
-						<div id="guest_login" class="btn"></div>
-					</td>
-				</tr>
-				<tr>
-					<td colspan="2" align="center"><br>
-						<select id="lang_select">
-							<option value="en">English</option>
-							<option value="zh">繁體中文</option>
-							<option value="ja">日本語</option>
-						</select>
-					</td>
-				</tr>
-			</table>
+		    <div class="row-fluid">
+			    <div class="offset4 span4">
+			    	<table>
+						<tr>
+							<td align="right">
+								<div id="fb_login" class="btn btn-primary"></div>	
+							</td>
+							<td>
+								<div id="guest_login" class="btn"></div>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2"><br>
+								<div id="purpose"></div>
+								<div id="pp1"></div>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2"><br>
+								<div id="manual"></div>
+								<ol>
+									<li id="mn1"></li>
+									<li id="mn2"></li>
+									<li id="mn3"></li>
+								</ol>
+							</td>
+						</tr>
+						<tr>
+							<td colspan="2" align="center">
+								<select id="lang_select">
+									<option value="en">English</option>
+									<option value="zh">繁體中文</option>
+									<option value="ja">日本語</option>
+								</select>
+							</td>
+						</tr>
+					</table>
+			    </div>
+		    </div>
 		</center>
+		<script src="javascript/translation.js"></script>
 		<script type="text/javascript">
 			var lang = "en";
-			var translation = {
-				"welcome": {
-					"en": "Welcome, my lord.",
-					"zh": "主人您來啦？歡迎～",
-					"ja": "いらっしゃいませ、御主人様。"
-				},
-				"fb_login": {
-					"en": "Use facebook account",
-					"zh": "Facebook登入",
-					"ja": "Facebookでログイン"
-				},
-				"guest_login": {
-					"en": "Login as guest",
-					"zh": "訪客帳號",
-					"ja": "訪問者登録"
-				},
-				"login_plz": {
-					"en": "Login your account, and agree to use app.",
-					"zh": "請登入並同意使用本應用程式",
-					"ja": "ログインください"
-				}
-			};
-
 			var any_left = parseInt($("#any").css("left"), 10);
 			var any_top = parseInt($("#any").css("top"), 10);
 
+			$("#lang_select :first").prop("selected", true).trigger("change")
 			$("#lang_select").change(function() {
 				lang = $("#lang_select").prop("value");
 				localize();
@@ -89,21 +92,24 @@
 			localize();
 			function localize() {
 			
-				$("#welcome").html(translation["welcome"][lang]);
 				$("#welcome").css("left", any_left + 80 + "px");
 				$("#welcome").css("top", any_top - 20 + "px");
 
-				$("#guest_login").html(translation["guest_login"][lang]);
-				$("#fb_login").html(translation["fb_login"][lang]);
+				var arr = ["welcome", "guest_login", "fb_login", "purpose", "pp1", "manual", "mn1", "mn2", "mn3"];
+				for(var i=0;i<arr.length;i++) {
+					$("#"+arr[i]).html(translation[arr[i]][lang]);
+				}
 			}
 		</script>
 		<div id="fb-root"></div>
 		<script src="/socket.io/socket.io.js"></script>
 		<script type="text/javascript">
+
 		var hostname = "mr-tvbs.nko3.jitsu.com";
+		
 		window.fbAsyncInit = function() {
 			FB.init({
-				appId      : '520027581354212',
+				appId      : '301129303330641',
 				channelUrl : '//'+hostname+"/channel.html"
 			});
 			$("#fb_login").click(function() {
@@ -128,7 +134,7 @@
 			js = d.createElement('script'); js.id = id; js.async = true;
 			js.src = "//connect.facebook.net/en_US/all" + (debug ? "/debug" : "") + ".js";
 			ref.parentNode.insertBefore(js, ref);
-		}(document, /*debug*/ false));
+		}(document,  false));
 		</script>
 	</body>
 </html>

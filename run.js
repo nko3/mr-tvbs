@@ -94,9 +94,9 @@ var local = new Localize({
         "zh": "哇！$[1] 收到安麗送的特別禮物！",
             "ja": "うわあ！エーニちゃんは $[1] に特別のプレゼントをあげました！"
     },
-        "Remeber to eat dinner, my lord.": {
-        "zh": "親愛的主人，已經到了用餐時間囉～",
-            "ja": "御主人様、もう昼ごはんの時間です"
+        "It's already $[1], my lord.": {
+        "zh": "親愛的主人，現在是 $[1]。",
+            "ja": "御主人様、今は $[1] です"
     }
 });
 
@@ -224,21 +224,21 @@ io.sockets.on('connection', function (socket) {
 
             //公開資訊
             socket.broadcast.emit('news_data', {
-                arr: newsArr
+                arr: newsArr.splice(0, newsArr.length - 15)
             });
 
         }, offset);
     }
 
-    //提醒主人吃晚餐囉
+    //整點報時一次
     var cronJob = require('cron').CronJob;
     try {
         new cronJob({
-            cronTime: '00 30 18 * * *',
+            cronTime: '00 00 * * * *',
             onTick: function () {
                 turn = 4;
                 nxtTurn = 1;
-                hanashi = local.translate("Remember to eat dinner, my lord.");
+                hanashi = local.translate("It's already $[1], my lord.");
             },
             start: true,
             timeZone: "Asia/Taipei"
@@ -249,9 +249,6 @@ io.sockets.on('connection', function (socket) {
 
     socket.on('news_data', function () {
         newsArr.push(local.translate("$[1] send a gift to Any.", username));
-        if (newsArr.length >= 15) {
-            newsArr.shift();
-        }
     });
 
     socket.on('client_data', function (data) {
