@@ -1,6 +1,6 @@
 {
   "name": "nko3-mr-tvbs",
-  "version": "0.0.0-55",
+  "version": "0.0.0-60",
   "description": "Are you feel lonely? Come visit our cute servant Any.",
   "main": "run.js",
   "scripts": {

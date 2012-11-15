@@ -51,7 +51,7 @@ function letsPlay() {
     socket.on('connect', function () {
         disableSpeak("n");
         $("#text").focus();
-        
+
         socket.emit('client_data', {
             username: username
         });
@@ -80,6 +80,24 @@ function letsPlay() {
         socket.emit('news_data', {});
     });
 
+    //language switcher
+    $("#lang_select").change(function() {
+        socket.emit('lang_change', {lang: $(this).prop("value")});
+        localize($(this).prop("value"));
+    });
+
+    //網站文字翻譯
+    function localize(lang) {
+        $("#vote").html(translation["vote"][lang]);
+        $("#online_user").html(translation["online_user"][lang]);
+        $("#person").html(translation["person"][lang]);
+        $("#sidebar_title").html(translation["sidebar_title"][lang]);
+        $("#text").prop("placeholder", translation["placeholder"][lang]);
+        $("#send").prop("value", translation["send"][lang]);
+        //切換select option
+        $("#lang_select option[value='"+lang+"']").prop("selected", "selected");
+    }
+
     var imgurl;
     var accept_from_server = true;
 
@@ -87,16 +105,10 @@ function letsPlay() {
     function customEvent() {
 
         var global_data = function (data) {
+            //定義全域變數
             lang = data.lang;
             imgurl = data.imgurl;
-
-            //翻譯網站文字
-            $("#vote").html(translation["vote"][lang]);
-            $("#online_user").html(translation["online_user"][lang]);
-            $("#person").html(translation["person"][lang]);
-            $("#sidebar_title").html(translation["sidebar_title"][lang]);
-            $("#text").prop("placeholder", translation["placeholder"][lang]);
-            $("#send").prop("value", translation["send"][lang]);
+            localize(lang);
         };
         var images_data = function (data) {
             // Add hidden element

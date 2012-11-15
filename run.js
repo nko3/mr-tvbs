@@ -222,9 +222,13 @@ io.sockets.on('connection', function (socket) {
                 arr: clientArr
             });
 
+            while(newsArr.length > 15) {
+            	newsArr.shift();
+            }
+
             //公開資訊
             socket.broadcast.emit('news_data', {
-                arr: newsArr.splice(0, newsArr.length - 15)
+                arr: newsArr
             });
 
         }, offset);
@@ -271,6 +275,10 @@ io.sockets.on('connection', function (socket) {
         hanashi = local.translate("Have a nice day, my lord.");
 
         clientArr.removeElement(username);
+    });
+
+    socket.on('lang_change', function (data) {
+    	local.setLocale(data.lang);
     });
 
     socket.on('gift_data', function (data) {
