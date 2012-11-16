@@ -124,7 +124,17 @@ function letsPlay() {
             });
         };
         var server_data = function (data) {
+            //refresh online user
             $("#nowClient").html(data.nowClient);
+
+            //refresh public message
+            var html = "";
+            var arr = new Array();
+            arr = data.newsArr;
+            for (var i = arr.length - 1; i >= 0; i--) {
+                html += "<tr><td>" + arr[i] + "</td></tr>";
+            }
+            $("#news_data").html(html);
         };
         var client_data = function (data) {
             var html = "";
@@ -134,15 +144,6 @@ function letsPlay() {
                 html += "<tr><td>" + arr[i] + "</td></tr>";
             }
             $("#client_data").html(html);
-        };
-        var news_data = function (data) {
-            var html = "";
-            var arr = new Array();
-            arr = data.arr;
-            for (var i = arr.length - 1; i >= 0; i--) {
-                html += "<tr><td>" + arr[i] + "</td></tr>";
-            }
-            $("#news_data").html(html);
         };
         var avatar_data = function (data) {
             if (accept_from_server == true) {
@@ -276,7 +277,6 @@ function letsPlay() {
         socket.on('server_data', server_data);
         socket.on('client_data', client_data);
         socket.on('images_data', images_data);
-        socket.on('news_data', news_data);
         socket.on('avatar_data', avatar_data);
         socket.on('bubble_data', bubble_data);
         socket.on('gift_to_client', gift_to_client);

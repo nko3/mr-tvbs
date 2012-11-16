@@ -212,23 +212,22 @@ io.sockets.on('connection', function (socket) {
                 move = 1;
             }
 
-            //伺服器資訊
+            //算出玩家人數
+            nowClient = clientArr.length;
+            //公告訊息不得超過15
+            while(newsArr.length > 15) {
+                newsArr.shift();
+            }
+
+            //廣播伺服器資訊
             socket.broadcast.emit('server_data', {
-                nowClient: nowClient
+                nowClient: nowClient,
+                newsArr: newsArr
             });
 
             //客戶端資訊
             socket.broadcast.emit('client_data', {
                 arr: clientArr
-            });
-
-            while(newsArr.length > 15) {
-            	newsArr.shift();
-            }
-
-            //公開資訊
-            socket.broadcast.emit('news_data', {
-                arr: newsArr
             });
 
         }, offset);
@@ -256,8 +255,6 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('client_data', function (data) {
-        nowClient++;
-
         turn = 4;
         nxtTurn = 1;
         hanashi = local.translate("Welcome back, my lord.");
@@ -268,7 +265,6 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('disconnect', function () {
-        nowClient--;
 
         turn = 4;
         nxtTurn = 1;

@@ -104,10 +104,10 @@
 
 			localize();
 			function localize() {
-			
+
 				$("#welcome").css("left", any_left + 80 + "px");
 				$("#welcome").css("top", any_top - 20 + "px");
-
+				//use index to fetch translations
 				var arr = ["welcome", "guest_login", "fb_login", "purpose", "pp1", "manual", "mn1", "mn2", "mn3"];
 				for(var i=0;i<arr.length;i++) {
 					$("#"+arr[i]).html(translation[arr[i]][lang]);
