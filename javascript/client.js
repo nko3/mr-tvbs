@@ -83,7 +83,8 @@ function letsPlay() {
     //language switcher
     $("#lang_select").change(function() {
         socket.emit('lang_change', {lang: $(this).prop("value")});
-        localize($(this).prop("value"));
+        lang = $(this).prop("value"); //client.html lang
+        localize($(this).prop("value")); //change objs lang in client.html
     });
 
     //網站文字翻譯

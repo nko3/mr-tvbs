@@ -153,6 +153,7 @@ io.sockets.on('connection', function (socket) {
 
     //啟動後持續偵測
     if (r == false) {
+
         r = setInterval(function () {
 
             turn = (turn !== 0) ? turn : useceil(1, 3); //1=forward, 2=left, 3=right, 4=nod
@@ -233,23 +234,6 @@ io.sockets.on('connection', function (socket) {
         }, offset);
     }
 
-    //整點報時一次
-    var cronJob = require('cron').CronJob;
-    try {
-        new cronJob({
-            cronTime: '00 00 * * * *',
-            onTick: function () {
-                turn = 4;
-                nxtTurn = 1;
-                hanashi = local.translate("It's already $[1], my lord.");
-            },
-            start: true,
-            timeZone: "Asia/Taipei"
-        })
-    } catch (ex) {
-        console.log(ex);
-    }
-
     socket.on('news_data', function () {
         newsArr.push(local.translate("$[1] send a gift to Any.", username));
     });
@@ -328,6 +312,23 @@ io.sockets.on('connection', function (socket) {
         }, 2000);
     });
 });
+
+//整點報時一次
+var cronJob = require('cron').CronJob;
+try {
+    new cronJob({
+        cronTime: '00 00 * * * *',
+        onTick: function () {
+            turn = 4;
+            nxtTurn = 1;
+            hanashi = local.translate("It's already $[1], my lord.", new Date().getHours() + ":00");
+        },
+        start: true,
+        timeZone: "Asia/Taipei"
+    })
+} catch (ex) {
+    console.log(ex);
+}
 
 //取亂數
 function useceil(min, max) {
